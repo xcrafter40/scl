@@ -11,16 +11,6 @@ Even or odd number:
 ### How it works
 This entire language uses stacks to organize data. For example:
 `3 3 + println` adds together 3 and 3 and prints them
-Full stack diagram
-
-Instruction
-   ---
-  Stack
-
- 3    3    +        println
----  ---  ---          ---
- 3    3    6   (Prints 6 to console)
-      3
 
 ### Using the API
 The entire VM is in an API. How to use:
