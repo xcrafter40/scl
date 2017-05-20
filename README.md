@@ -23,4 +23,35 @@ The commands you can do with that object:
 machine.setcode([5, "println"]) #prints 5
 
 #run the machine
-mach
+machine.run()
+
+#stack functions
+machine.pop()
+machine.push("hello world!")
+machine.top()
+
+#manual operation
+#doesn't parse the stack, everything is manual
+machine.push("hello world!")
+machine.println()
+```
+### Command Index
+* %
+* *
+* +
+* -
+* /
+* ==
+* print
+* println
+* jmp
+* int
+* str
+* over
+* read
+* noop
+* dup
+* exit
+* var
+* vget
+* if
