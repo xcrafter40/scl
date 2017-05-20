@@ -51,9 +51,9 @@ machine.println()
 * int
 * str
 * over
+* dup
 * read
 * noop
-* dup
 * exit
 * var
 * vget
