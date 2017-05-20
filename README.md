@@ -36,11 +36,11 @@ machine.push("hello world!")
 machine.println()
 ```
 ### Command Index
-* %
-* *
-* +
-* -
-* /
+* (%)
+* (*)
+* (+)
+* (-)
+* (/)
 * ==
 * print
 * println
