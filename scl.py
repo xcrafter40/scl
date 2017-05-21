@@ -1,15 +1,26 @@
-from collections import deque
 import sys
 
-ver = "0.0.1"
+ver = "0.0.2"
 vmbuild = "3"
 stage = "STABLE"
 
-class Stack(deque):
-    push = deque.append
+class Stack:
+    def __init__(self):
+        self.obj = []
+    def pop(self):
+        try:
+            return self.obj.pop()
+        except IndexError:
+            pass
+
+    def push(self,item):
+        self.obj.append(item)
 
     def top(self):
-        return self[-1]
+        return self.obj[-1]
+
+    def clear(self):
+        self.obj = []
 
 class Machine:
     def __init__(self, code):
@@ -38,6 +49,7 @@ class Machine:
             "var":      self.var,
             "vget":     self.vget,
             "if":       self.if_stmt,
+            "cs":       self.clearstack,
         }
 
     def setcode(self,code):
@@ -51,6 +63,9 @@ class Machine:
 
     def top(self):
         return self.data_stack.top()
+
+    def clearstack(self):
+        self.data_stack.clear()
 
     def run(self):
         self.instruction_pointer = 0
