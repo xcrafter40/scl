@@ -59,3 +59,5 @@ machine.println()
 * vget
 * if
 * cs
+* rand
+* cls
