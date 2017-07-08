@@ -1,8 +1,10 @@
 import sys
+import random
+import os
 
-ver = "0.0.2"
+ver = "0.0.3"
 vmbuild = "3"
-stage = "STABLE"
+stage = "BETA"
 
 class Stack:
     def __init__(self):
@@ -50,6 +52,8 @@ class Machine:
             "vget":     self.vget,
             "if":       self.if_stmt,
             "cs":       self.clearstack,
+            "rand":     self.rand,
+            "cls":      self.cls,
         }
 
     def setcode(self,code):
@@ -77,14 +81,13 @@ class Machine:
     def dispatch(self, op):
         if op in self.dispatch_map:
             self.dispatch_map[op]()
-        elif isinstance(op, int):
-            # push numbers on the data stack
-            self.push(op)
-        elif isinstance(op, str) and op[0]==op[-1]=='"':
-            # push quoted strings on the data stack
+        elif isinstance(op, str) and op[0]=='"' and op[-1]=='"':
             self.push(op[1:-1])
         elif isinstance(op, bool):
-            #push booleans on the data stack
+            self.push(op)
+        elif isinstance(op, int):
+            self.push(op)
+        elif isinstance(op, float):
             self.push(op)
         else:
             raise RuntimeError("Unknown opcode: '%s'" % op)
@@ -106,10 +109,7 @@ class Machine:
     def div(self):
         last = self.pop()
         l2 = self.pop()
-        if (last / l2).is_integer():
-            self.push(l2 // last)
-        else:
-            self.push(l2 / last)
+        self.push(l2 / last)
 
     def print_(self):
         sys.stdout.write(str(self.pop()))
@@ -173,3 +173,17 @@ class Machine:
         v2 = self.pop()
         v1 = self.pop()
         self.push(True if v1 == v2 else False)
+
+    def rand(self):
+        b = self.pop()
+        a = self.pop()
+        self.push(random.randint(a,b))
+
+    def cls(self):
+        numlines = 350
+        if os.name in ("posix","darwin"):
+            os.system('clear')
+        elif os.name in ("nt", "dos", "ce"):
+            os.system('CLS')
+        else:
+            print('\n' * numlines)
