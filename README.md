@@ -16,7 +16,8 @@ Guess my number (Doesn't work):
 
 ### How it works
 This entire language uses stacks to organize data. For example:
-`3 3 + println` adds together 3 and 3 and prints them
+`3 3 + println` pushes 3 and 3 to the stack. + Adds them together and pushes 6.
+Finally, println prints the data on the stack. (6)
 
 ### Using the API
 The entire VM is in an API. How to use:
