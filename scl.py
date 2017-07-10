@@ -4,7 +4,7 @@ import os
 
 ver = "0.0.3"
 vmbuild = "3"
-stage = "BETA"
+stage = "STABLE"
 
 class Stack:
     def __init__(self):
