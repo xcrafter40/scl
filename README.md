@@ -11,8 +11,8 @@ Add 2 numbers:
 Even or odd number:
 `"Number: " println read int 2 % 0 == 12 16 if jmp "It's even" println 18 jmp "It's odd" println noop`
 
-Guess my number (Doesn't work):
-`1 1 rand "The number has been chosen!" println "Your guess: " print read int == 15 19 if jmp "You win!" println cs 22 jmp "Try again" println noop`
+Guess my number (Version 0.0.4 and up):
+`1 5 rand "The number has been chosen!" println "Your guess" print read int == "win" "lose" if jtag tag:win "You win!" println "end" jtag tag:lose "Try again" println tag:end noop`
 
 ### How it works
 This entire language uses stacks to organize data. For example:
