@@ -1,17 +1,29 @@
 import sys
 import random
 import os
+import time
 
-ver = "0.0.3"
+ver = "0.1.0"
 vmbuild = "3"
 stage = "STABLE"
 
 class Stack:
     def __init__(self):
         self.obj = []
+        self.protect = False
+
+    def nopop(self):
+        if self.protect:
+            self.protect = False
+        else:
+            self.protect = True
+
     def pop(self):
         try:
-            return self.obj.pop()
+            if self.protect:
+                return self.obj[-1]
+            else:
+                return self.obj.pop()
         except IndexError:
             pass
 
@@ -24,6 +36,10 @@ class Stack:
     def clear(self):
         self.obj = []
 
+class sclError(Exception):
+    def __init__(self,msg):
+        pass
+
 class Machine:
     def __init__(self, code):
         self.data_stack = Stack()
@@ -31,6 +47,8 @@ class Machine:
         self.instruction_pointer = 0
         self.code = code
         self.svar = {}
+        self.tags = {}
+        self.debugmode = False
         self.dispatch_map = {
             "%":        self.mod,
             "*":        self.mul,
@@ -54,6 +72,12 @@ class Machine:
             "cs":       self.clearstack,
             "rand":     self.rand,
             "cls":      self.cls,
+            "jtag":     self.jtag,
+            "pop":      self.pop,
+            "dbg":      self.dbg,
+            "npop":     self.npop,
+            "flt":      self.cast_flt,
+            "wait":     self.wait,
         }
 
     def setcode(self,code):
@@ -71,7 +95,18 @@ class Machine:
     def clearstack(self):
         self.data_stack.clear()
 
+    def precompile(self):
+        self.instruction_pointer = 0
+        while self.instruction_pointer < len(self.code):
+            opcode = self.code[self.instruction_pointer]
+            if isinstance(opcode, str) and opcode[0:4] == "tag:":
+                clean = opcode.split(":")
+                self.tags[clean[1]] = self.instruction_pointer + 1
+            self.instruction_pointer += 1
+
     def run(self):
+        self.tags = {}
+        self.precompile()
         self.instruction_pointer = 0
         while self.instruction_pointer < len(self.code):
             opcode = self.code[self.instruction_pointer]
@@ -87,29 +122,57 @@ class Machine:
             self.push(op)
         elif isinstance(op, int):
             self.push(op)
+        elif isinstance(op, str) and op[0:4] == "tag:":
+            pass
         elif isinstance(op, float):
             self.push(op)
         else:
-            raise RuntimeError("Unknown opcode: '%s'" % op)
+            raise sclError("Section " + str(self.instruction_pointer) + ": Unknown opcode: " + op)
+
+        if self.debugmode:
+            print("Pointer:", self.instruction_pointer - 1)
+            print("Opcode:", op)
+            print("Stack:", self.data_stack.obj)
 
     def mod(self):
         last = self.pop()
-        self.push(self.pop() % last)
+        l2 = self.pop()
+        if isinstance(l2, int) or isinstance(l2, float) and isinstance(last, int) or isinstance(last, float):
+            self.push(l2 % last)
+        else:
+            raise sclError("arguments are not integers")
 
     def plus(self):
-        self.push(self.pop() + self.pop())
+        last = self.pop()
+        l2 = self.pop()
+        if isinstance(l2, int) or isinstance(l2, float) and isinstance(last, int) or isinstance(last, float):
+            self.push(l2 + last)
+        else:
+            raise sclError("arguments are not integers")
 
     def minus(self):
         last = self.pop()
-        self.push(self.pop() - last)
+        l2 = self.pop()
+        if isinstance(l2, int) or isinstance(l2, float) and isinstance(last, int) or isinstance(last, float):
+            self.push(l2 - last)
+        else:
+            raise sclError("arguments are not integers")
 
     def mul(self):
-        self.push(self.pop() * self.pop())
+        last = self.pop()
+        l2 = self.pop()
+        if isinstance(l2, int) or isinstance(l2, float) and isinstance(last, int) or isinstance(last, float):
+            self.push(l2 * last)
+        else:
+            raise sclError("arguments are not integers")
 
     def div(self):
         last = self.pop()
         l2 = self.pop()
-        self.push(l2 / last)
+        if isinstance(l2, int) or isinstance(l2, float) and isinstance(last, int) or isinstance(last, float):
+            self.push(l2 / last)
+        else:
+            raise sclError("arguments are not integers")
 
     def print_(self):
         sys.stdout.write(str(self.pop()))
@@ -124,7 +187,7 @@ class Machine:
         if isinstance(addr, int) and 0 <= addr < len(self.code):
             self.instruction_pointer = addr
         else:
-            raise RuntimeError("JMP address must be a valid integer.")
+            raise sclError("jmp address must be a valid integer")
 
     def if_stmt(self):
         false_clause = self.pop()
@@ -136,10 +199,19 @@ class Machine:
             self.push(false_clause)
 
     def cast_int(self):
-        self.push(int(self.pop()))
+        try:
+            self.push(int(self.pop()))
+        except ValueError:
+            raise sclError("cannot convert")
 
     def cast_str(self):
         self.push(str(self.pop()))
+
+    def cast_flt(self):
+        try:
+            self.push(float(self.pop()))
+        except ValueError:
+            raise sclError("str doesn't have float")
 
     def over(self):
         b = self.pop()
@@ -180,10 +252,32 @@ class Machine:
         self.push(random.randint(a,b))
 
     def cls(self):
-        numlines = 350
         if os.name in ("posix","darwin"):
-            os.system('clear')
+            os.system("clear")
         elif os.name in ("nt", "dos", "ce"):
-            os.system('CLS')
+            os.system("CLS")
         else:
-            print('\n' * numlines)
+            print('\n' * 350)
+
+    def jtag(self):
+        tag = self.pop()
+        if isinstance(tag, str) and tag in self.tags:
+            self.instruction_pointer = self.tags[tag]
+        else:
+            raise sclError("jtag address must be a valid tag")
+
+    def dbg(self):
+        if self.debugmode:
+            self.debugmode = False
+        else:
+            self.debugmode = True
+
+    def npop(self):
+        self.data_stack.nopop()
+
+    def wait(self):
+        try:
+            wtime = (float(self.pop()))
+        except ValueError:
+            raise sclError("not a number")
+        time.sleep(wtime)
