@@ -71,3 +71,7 @@ machine.println()
 * npop
 * flt
 * jtag
+
+### Credits
+Thanks a ton to CSLarsen for the backbone of SCL
+[https://csl.name/post/vm/]
