@@ -65,3 +65,9 @@ machine.println()
 * cs
 * rand
 * cls
+* dbg
+* wait
+* tag:X
+* npop
+* flt
+* jtag
