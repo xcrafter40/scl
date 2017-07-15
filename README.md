@@ -9,9 +9,9 @@ Add 2 numbers:
 `"Number 1:" println read int "Number 2:" println read int + println`
 
 Even or odd number:
-`"Number: " println read int 2 % 0 == 12 16 if jmp "It's even" println 18 jmp "It's odd" println noop`
+`"Number: " println read int 2 % 0 == "It's even" "It's odd" if println`
 
-Guess my number (Version 0.0.4 and up):
+Guess my number:
 `1 5 rand "The number has been chosen!" println "Your guess" print read int == "win" "lose" if jtag tag:win "You win!" println "end" jtag tag:lose "Try again" println tag:end noop`
 
 ### How it works
