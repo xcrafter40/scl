@@ -74,4 +74,5 @@ machine.println()
 
 ### Credits
 Thanks a ton to CSLarsen for the backbone of SCL
-[https://csl.name/post/vm/]
+
+https://csl.name/post/vm/
