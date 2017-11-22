@@ -55,12 +55,8 @@ while True:
         code = parse(source)
         main.setcode(code)
         main.run()
-    except (RuntimeError, IndexError) as e:
-        print("Error: %s" % e)
     except KeyboardInterrupt:
         print("\nKeyboardInterrupt")
         exit()
-    except EOFError as e:
+    except EOFError:
         print()
-    except Exception as e:
-        print("Internal error: %s" % e)

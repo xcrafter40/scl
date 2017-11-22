@@ -36,10 +36,6 @@ class Stack:
     def clear(self):
         self.obj = []
 
-class sclError(Exception):
-    def __init__(self,msg):
-        pass
-
 class Machine:
     def __init__(self, code):
         self.data_stack = Stack()
@@ -49,6 +45,16 @@ class Machine:
         self.svar = {}
         self.tags = {}
         self.debugmode = False
+        self.errorid = {
+            0: "no error",
+            1: "internal error",
+            2: "argument type error",
+            3: "arithmetic error",
+            4: "jump error",
+            5: "conversion error",
+        }
+        self.breakinstruction = False
+        self.currentop = "noop"
         self.dispatch_map = {
             "%":        self.mod,
             "*":        self.mul,
@@ -109,11 +115,16 @@ class Machine:
         self.precompile()
         self.instruction_pointer = 0
         while self.instruction_pointer < len(self.code):
+            if self.breakinstruction:
+                break
             opcode = self.code[self.instruction_pointer]
             self.instruction_pointer += 1
             self.dispatch(opcode)
+        self.breakinstruction = False
+        self.currentop = "noop"
 
     def dispatch(self, op):
+        self.currentop = op
         if op in self.dispatch_map:
             self.dispatch_map[op]()
         elif isinstance(op, str) and op[0]=='"' and op[-1]=='"':
@@ -127,12 +138,28 @@ class Machine:
         elif isinstance(op, float):
             self.push(op)
         else:
-            raise sclError("Section " + str(self.instruction_pointer) + ": Unknown opcode: " + op)
+            self.self.sclError("Section " + str(self.instruction_pointer) + ": Unknown opcode: " + op)
 
         if self.debugmode:
             print("Pointer:", self.instruction_pointer - 1)
             print("Opcode:", op)
             print("Stack:", self.data_stack.obj)
+
+    def iwrite(self,txt):
+        sys.stdout.write(txt + "\n")
+        sys.stdout.flush()
+
+    def sclError(self,eno,err):
+        self.iwrite("SCL Error:" + " [" + str(eno) + "] " + err)
+        self.iwrite("Error type for id " + str(eno) + ":")
+        self.iwrite(self.errorid[eno])
+        self.iwrite("=-=-=-=")
+        self.iwrite("At location: " + str(self.instruction_pointer - 1))
+        self.iwrite("At instruction: " + self.currentop)
+        self.iwrite("=-=-=-=")
+        self.iwrite("Stack Print:")
+        self.iwrite(str(self.data_stack.obj))
+        self.breakinstruction = True
 
     def mod(self):
         last = self.pop()
@@ -140,15 +167,15 @@ class Machine:
         if isinstance(l2, int) or isinstance(l2, float) and isinstance(last, int) or isinstance(last, float):
             self.push(l2 % last)
         else:
-            raise sclError("arguments are not integers")
+            self.sclError(2,2,"type mismatch (expected int/float)")
 
     def plus(self):
         last = self.pop()
         l2 = self.pop()
-        if isinstance(l2, int) or isinstance(l2, float) and isinstance(last, int) or isinstance(last, float):
+        if (isinstance(l2, int) or isinstance(l2, float)) and (isinstance(last, int) or isinstance(last, float)):
             self.push(l2 + last)
         else:
-            raise sclError("arguments are not integers")
+            self.sclError(2,"type mismatch (expected int/float)")
 
     def minus(self):
         last = self.pop()
@@ -156,7 +183,7 @@ class Machine:
         if isinstance(l2, int) or isinstance(l2, float) and isinstance(last, int) or isinstance(last, float):
             self.push(l2 - last)
         else:
-            raise sclError("arguments are not integers")
+            self.sclError(2,"type mismatch (expected int/float)")
 
     def mul(self):
         last = self.pop()
@@ -164,7 +191,7 @@ class Machine:
         if isinstance(l2, int) or isinstance(l2, float) and isinstance(last, int) or isinstance(last, float):
             self.push(l2 * last)
         else:
-            raise sclError("arguments are not integers")
+            self.sclError(2,"type mismatch (expected int/float)")
 
     def div(self):
         last = self.pop()
@@ -172,7 +199,7 @@ class Machine:
         if isinstance(l2, int) or isinstance(l2, float) and isinstance(last, int) or isinstance(last, float):
             self.push(l2 / last)
         else:
-            raise sclError("arguments are not integers")
+            self.sclError(2,"type mismatch (expected int/float)")
 
     def print_(self):
         sys.stdout.write(str(self.pop()))
@@ -184,10 +211,13 @@ class Machine:
 
     def jmp(self):
         addr = self.pop()
-        if isinstance(addr, int) and 0 <= addr < len(self.code):
-            self.instruction_pointer = addr
-        else:
-            raise sclError("jmp address must be a valid integer")
+        if not isinstance(addr, int):
+            self.sclError(2,"type mismatch (expected int)")
+            return
+        if not 0 <= addr < len(self.code):
+            self.sclError(4,"jump out of bounds")
+            return
+        self.sclError("jmp address must be a valid integer")
 
     def if_stmt(self):
         false_clause = self.pop()
@@ -202,7 +232,7 @@ class Machine:
         try:
             self.push(int(self.pop()))
         except ValueError:
-            raise sclError("cannot convert")
+            self.sclError(5,"type mismatch (expected str as int)")
 
     def cast_str(self):
         self.push(str(self.pop()))
@@ -211,7 +241,7 @@ class Machine:
         try:
             self.push(float(self.pop()))
         except ValueError:
-            raise sclError("str doesn't have float")
+            self.sclError(5,"type mismatch (expected str as float)")
 
     def over(self):
         b = self.pop()
@@ -264,7 +294,7 @@ class Machine:
         if isinstance(tag, str) and tag in self.tags:
             self.instruction_pointer = self.tags[tag]
         else:
-            raise sclError("jtag address must be a valid tag")
+            self.sclError("jtag address must be a valid tag")
 
     def dbg(self):
         if self.debugmode:
@@ -279,5 +309,5 @@ class Machine:
         try:
             wtime = (float(self.pop()))
         except ValueError:
-            raise sclError("not a number")
+            self.sclError(2,"type mismatch (expected int/float)")
         time.sleep(wtime)
