@@ -55,9 +55,9 @@ machine.println()
 * int
 * str
 * over
-* dup
 * read
 * noop
+* dup
 * exit
 * var
 * vget
@@ -65,12 +65,11 @@ machine.println()
 * cs
 * rand
 * cls
-* dbg
-* wait
-* tag:X
+* jtag
 * npop
 * flt
-* jtag
+* wait
+* sp
 
 ### Credits
 Thanks a ton to CSLarsen for the backbone of SCL
