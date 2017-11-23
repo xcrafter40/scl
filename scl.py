@@ -3,7 +3,7 @@ import random
 import os
 import time
 
-ver = "0.1.0"
+ver = "0.2.1"
 vmbuild = "3"
 stage = "STABLE"
 
