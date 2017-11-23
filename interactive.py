@@ -45,18 +45,19 @@ def parse(text):
         ctr = ctr + 1
     return txt
 
-main = scl.Machine([])
-print("SCL", scl.ver, "(" + scl.stage + ", " "VM Build", scl.vmbuild + ")")
-print('Hit CTRL+C or type "exit" to quit.')
+if __name__ == '__main__':
+    main = scl.Machine([])
+    print("SCL", scl.ver, "(" + scl.stage + ", " "VM Build", scl.vmbuild + ")")
+    print('Hit CTRL+C or type "exit" to quit.')
 
-while True:
-    try:
-        source = input("> ")
-        code = parse(source)
-        main.setcode(code)
-        main.run()
-    except KeyboardInterrupt:
-        print("\nKeyboardInterrupt")
-        exit()
-    except EOFError:
-        print()
+    while True:
+        try:
+            source = input("> ")
+            code = parse(source)
+            main.setcode(code)
+            main.run()
+        except KeyboardInterrupt:
+            print("\nKeyboardInterrupt")
+            exit()
+        except EOFError:
+            print()
