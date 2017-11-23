@@ -164,7 +164,7 @@ class Machine:
     def mod(self):
         last = self.pop()
         l2 = self.pop()
-        if isinstance(l2, int) or isinstance(l2, float) and isinstance(last, int) or isinstance(last, float):
+        if (isinstance(l2, int) or isinstance(l2, float)) and (isinstance(last, int) or isinstance(last, float)):
             self.push(l2 % last)
         else:
             self.sclError(2,2,"type mismatch (expected int/float)")
@@ -180,7 +180,7 @@ class Machine:
     def minus(self):
         last = self.pop()
         l2 = self.pop()
-        if isinstance(l2, int) or isinstance(l2, float) and isinstance(last, int) or isinstance(last, float):
+        if (isinstance(l2, int) or isinstance(l2, float)) and (isinstance(last, int) or isinstance(last, float)):
             self.push(l2 - last)
         else:
             self.sclError(2,"type mismatch (expected int/float)")
@@ -188,7 +188,7 @@ class Machine:
     def mul(self):
         last = self.pop()
         l2 = self.pop()
-        if isinstance(l2, int) or isinstance(l2, float) and isinstance(last, int) or isinstance(last, float):
+        if (isinstance(l2, int) or isinstance(l2, float)) and (isinstance(last, int) or isinstance(last, float)):
             self.push(l2 * last)
         else:
             self.sclError(2,"type mismatch (expected int/float)")
@@ -196,7 +196,7 @@ class Machine:
     def div(self):
         last = self.pop()
         l2 = self.pop()
-        if isinstance(l2, int) or isinstance(l2, float) and isinstance(last, int) or isinstance(last, float):
+        if (isinstance(l2, int) or isinstance(l2, float)) and (isinstance(last, int) or isinstance(last, float)):
             self.push(l2 / last)
         else:
             self.sclError(2,"type mismatch (expected int/float)")
