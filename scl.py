@@ -3,7 +3,7 @@ import random
 import os
 import time
 
-ver = "0.2.1"
+ver = "0.3.0"
 vmbuild = "3"
 stage = "STABLE"
 
@@ -52,6 +52,7 @@ class Machine:
             3: "arithmetic error",
             4: "jump error",
             5: "conversion error",
+            6: "opcode error"
         }
         self.breakinstruction = False
         self.currentop = "noop"
@@ -84,7 +85,12 @@ class Machine:
             "npop":     self.npop,
             "flt":      self.cast_flt,
             "wait":     self.wait,
+            "sp":       self.sp,
         }
+
+    def iwrite(self,txt):
+        sys.stdout.write(str(txt) + "\n")
+        sys.stdout.flush()
 
     def setcode(self,code):
         self.code = code
@@ -138,16 +144,15 @@ class Machine:
         elif isinstance(op, float):
             self.push(op)
         else:
-            self.self.sclError("Section " + str(self.instruction_pointer) + ": Unknown opcode: " + op)
+            self.sclError(6,"invalid opcode")
 
         if self.debugmode:
-            print("Pointer:", self.instruction_pointer - 1)
-            print("Opcode:", op)
-            print("Stack:", self.data_stack.obj)
-
-    def iwrite(self,txt):
-        sys.stdout.write(txt + "\n")
-        sys.stdout.flush()
+            self.iwrite("")
+            self.iwrite("Pointer: " + str(self.instruction_pointer - 1))
+            self.iwrite("Opcode: " + str(op))
+            self.iwrite("Stack: " + str(self.data_stack.obj))
+            self.iwrite("Variable: " + str(self.svar))
+            self.iwrite("")
 
     def sclError(self,eno,err):
         self.iwrite("SCL Error:" + " [" + str(eno) + "] " + err)
@@ -157,8 +162,10 @@ class Machine:
         self.iwrite("At location: " + str(self.instruction_pointer - 1))
         self.iwrite("At instruction: " + self.currentop)
         self.iwrite("=-=-=-=")
-        self.iwrite("Stack Print:")
+        self.iwrite("Stack Dump:")
         self.iwrite(str(self.data_stack.obj))
+        self.iwrite("Variable Dump:")
+        self.iwrite(str(self.svar))
         self.breakinstruction = True
 
     def mod(self):
@@ -263,8 +270,8 @@ class Machine:
         exit()
 
     def var(self):
-        vv = self.pop()
         vn = self.pop()
+        vv = self.pop()
         self.svar[vn] = vv
 
     def vget(self):
@@ -294,7 +301,7 @@ class Machine:
         if isinstance(tag, str) and tag in self.tags:
             self.instruction_pointer = self.tags[tag]
         else:
-            self.sclError("jtag address must be a valid tag")
+            self.sclError(4,"jtag address must be a valid tag")
 
     def dbg(self):
         if self.debugmode:
@@ -311,3 +318,6 @@ class Machine:
         except ValueError:
             self.sclError(2,"type mismatch (expected int/float)")
         time.sleep(wtime)
+
+    def sp(self):
+        self.iwrite(self.data_stack.obj)
