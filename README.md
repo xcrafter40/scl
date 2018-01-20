@@ -70,6 +70,9 @@ machine.println()
 * flt
 * wait
 * sp
+* ret
+* rtag
+* throw
 
 ### Credits
 Thanks a ton to CSLarsen for the backbone of SCL
