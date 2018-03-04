@@ -3,7 +3,7 @@ import random
 import os
 import time
 
-ver = "0.4.0"
+ver = "0.5.0"
 vmbuild = "3"
 stage = "STABLE"
 
@@ -39,7 +39,7 @@ class Stack:
 class Machine:
     def __init__(self, code):
         self.data_stack = Stack()
-        self.trace_stack = Stack()
+        self.call_stack = Stack()
         self.return_addr_stack = Stack()
         self.instruction_pointer = 0
         self.xdbgmode = True
@@ -58,7 +58,6 @@ class Machine:
             7: "thrown error",
         }
         self.breakinstruction = False
-        self.currentop = "how_did_you_get_here?!"
         self.dispatch_map = {
             "%":        self.mod,
             "*":        self.mul,
@@ -82,7 +81,7 @@ class Machine:
             "cs":       self.clearstack,
             "rand":     self.rand,
             "cls":      self.cls,
-            "jtag":     self.jtag,
+            "jmp":      self.jtag,
             "pop":      self.pop,
             "dbg":      self.dbg,
             "npop":     self.npop,
@@ -90,9 +89,12 @@ class Machine:
             "wait":     self.wait,
             "sp":       self.sp,
             "ret":      self.stk_ret,
-            "rtag":     self.rtag,
+            "sub":      self.rtag,
             "xdbg":     self.xdbg,
             "throw":    self.throw,
+            "vp":       self.vp,
+            "vdel":     self.vdel,
+            "swap":     self.swap,
         }
 
     def xdbg(self):
@@ -139,9 +141,14 @@ class Machine:
         self.instruction_pointer = 0
         while self.instruction_pointer < len(self.code):
             opcode = self.code[self.instruction_pointer]
-            if isinstance(opcode, str) and opcode[0:4] == "tag:":
-                clean = opcode.split(":")
-                self.tags[clean[1]] = self.instruction_pointer + 1
+
+            #if not self.dispatch_map[opcode]:
+            #   pass #throw an error?
+            #if isinstance(opcode, str) and opcode[0:4] == "tag:":
+            #    clean = opcode.split(":")
+            #    self.tags[clean[1]] = self.instruction_pointer + 1
+            if isinstance(opcode,str) and opcode == ":":
+                self.tags[str(self.code[self.instruction_pointer + 1])] = self.instruction_pointer + 2
             self.instruction_pointer += 1
 
     def run(self):
@@ -154,11 +161,10 @@ class Machine:
             opcode = self.code[self.instruction_pointer]
             self.instruction_pointer += 1
             self.dispatch(opcode)
+
         self.breakinstruction = False
-        self.currentop = "noop"
 
     def dispatch(self, op):
-        self.currentop = op
         if op in self.dispatch_map:
             self.dispatch_map[op]()
         elif isinstance(op, str) and op[0]=='"' and op[-1]=='"':
@@ -167,7 +173,7 @@ class Machine:
             self.push(op)
         elif isinstance(op, int):
             self.push(op)
-        elif isinstance(op, str) and op[0:4] == "tag:":
+        elif isinstance(op, str) and op == ":":
             pass
         elif isinstance(op, float):
             self.push(op)
@@ -175,27 +181,20 @@ class Machine:
             self.sclError(6,"invalid opcode")
 
         if self.debugmode:
-            #self.iwriteln("")
-            #self.iwriteln("Pointer: " + str(self.instruction_pointer - 1))
-            #self.iwriteln("Opcode: " + str(op))
-            #self.iwriteln("Stack: " + str(self.data_stack.obj))
-            #self.iwriteln("Return Stack: " + str(self.return_addr_stack.obj))
-            #self.iwriteln("Variable: " + str(self.svar))
-            #self.iwriteln("")
             self.iwrite("DBG: P: " + str(self.instruction_pointer - 1))
             self.iwrite(" O: " + str(op))
             self.iwrite(" S: " + str(self.data_stack.obj))
             self.iwrite(" R: " + str(self.return_addr_stack.obj))
             self.iwrite(" V: " + str(self.svar))
-            self.iwriteln(" ST: " + str(self.trace_stack.obj))
+            self.iwriteln(" ST: " + str(self.call_stack.obj))
 
     def sclError(self,eno,err):
         if self.xdbgmode:
             self.iwriteln("-----")
             self.iwriteln("SCL Error")
             self.iwriteln("Stack Trace")
-            if len(self.trace_stack.obj) > 0:
-                for i in self.trace_stack.obj:
+            if len(self.call_stack.obj) > 0:
+                for i in self.call_stack.obj:
                     self.iwriteln("in subroutine <" + i + ">")
             else:
                 self.iwriteln("in subroutine <main>")
@@ -359,22 +358,22 @@ class Machine:
         if isinstance(tag, str) and tag in self.tags:
             self.instruction_pointer = self.tags[tag]
         else:
-            self.sclError(4,"jtag address must be a valid tag")
+            self.sclError(4,"jmp address must be a valid location")
 
     def rtag(self):
         tag = self.pop()
         if isinstance(tag, str) and tag in self.tags:
-            self.trace_stack.push(tag)
+            self.call_stack.push(tag)
             self.retstack_push(self.instruction_pointer)
             self.instruction_pointer = self.tags[tag]
         else:
-            self.sclError(4,"rtag address must be a valid tag")
+            self.sclError(4,"sub address must be a valid location")
 
     def stk_ret(self):
         if not self.canret():
             self.sclError(4,"no position to return to")
         else:
-            self.trace_stack.pop()
+            self.call_stack.pop()
             self.instruction_pointer = self.retstack_pop()
 
     def dbg(self):
@@ -400,3 +399,20 @@ class Machine:
         errtext = self.pop()
         errno = self.pop()
         self.sclError(errno,errtext)
+
+    def vp(self):
+        for k,v in self.svar.items():
+            self.iwriteln(str(k) + " : " + str(v))
+
+    def vdel(self):
+        vtd = self.pop()
+        if self.svar[vtd]:
+            self.svar.pop(vtd, None)
+        else:
+            self.sclError(8,"no such variable")
+
+    def swap(self):
+        a = self.pop()
+        b = self.pop()
+        self.push(b)
+        self.push(a)

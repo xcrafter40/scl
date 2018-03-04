@@ -1,0 +1,19 @@
+"main" jmp
+
+: subrot1
+"welcome to the subroutine!" println
+"subrot2" sub
+"welcome back to the subroutine!" println
+"goodbye!" println
+ret
+
+: subrot2
+"welcome to subroutine 2!" println
+this_is_not_a_command
+"exiting subroutine 2!" println
+ret
+
+: main
+"we are in main!" println
+"subrot1" sub
+"after the subroutine!" println
